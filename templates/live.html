@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Mode</title>
+    <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"
+        integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous">
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="row p-5">
+            <div class="col text-center">
+                <h1 id=>Live Feed</h1>
+            </div>
+        </div>
+        <br>
+        <br>
+        <div class="row p-3 tweetBox">
+            <div class="col">
+                <h6 id="tweetTxt"></h6>
+            </div>
+        </div>
+    </div>
+    <script>
+        var sockets = io()
+        sockets.on('connect',(socket)=>{
+            sockets.emit('hello',{data:'Hello'});
+        })
+        sockets.on('message',(data)=>{
+            console.log(data)
+        })
+        sockets.on('tweet',(data)=>{
+            console.log(data)
+            document.getElementById('tweetTxt').innerHTML = data['text']
+            if(data['prediction']==0)
+                $('.tweetBox').css({'borderStyle': 'solid','borderWidth': '5px','borderColor': 'green'})
+            else
+                $('.tweetBox').css({'borderStyle': 'solid','borderWidth': '5px','borderColor': 'red'})
+        })
+       
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="container pt-5">
+        <h1>Twitter Sunog Classifier</h1>
+        <br>
+        <br>
+        <div class="row">
+            <input class="form-control" type="text" id="text" width="500px">
+        </div>
+        <div class="row mt-4">
+            <div class="col text-center">
+                <button class="btn btn-primary"  onclick=identify()>Classify</button>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col text-center">
+                <p id="classification"></p>
+            </div>
+        </div>
+    </div>
+    <script>
+
+        function identify(){
+            text = document.getElementById("text").value
+            $.get("/classify?text="+encodeURI(text),(data)=>{
+                console.log(data['prediction'])
+                document.getElementById("classification").innerHTML =data['prediction']==1?"May sunog":"Walang sunog"
+            })
+        }
+    </script>
+</body>
+</html>
