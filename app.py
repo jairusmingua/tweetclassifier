@@ -11,9 +11,36 @@ import emoji
 from threading import Thread,Lock
 from flask import request,render_template
 from flask_socketio import SocketIO,emit
+from os import path,rename,remove
+import shutil
+import wget
+
+from zipfile import ZipFile
 #model prep
-model = AutoModelForSequenceClassification.from_pretrained('finetuned_model')
-tokenizer = AutoTokenizer.from_pretrained('finetuned_model')
+#check if model exists
+model = None
+tokenizer = None
+done_downloading = False
+parser = argparse.ArgumentParser()
+parser.add_argument('--m',type=str,required=False,default='bert-tagalog-distilbert-tagalog-base-cased')
+args = parser.parse_args()
+model_name = str(args.m)
+thread = None
+thread_lock = Lock()
+print('Default Model: '+model_name)
+
+if(done_downloading==False):
+    if(not path.exists(model_name+'/'+'finetuned_model')):
+        print('Downloading Model...')
+        wget.download('https://storage.googleapis.com/crested-drive-172104.appspot.com/'+model_name+'.zip')
+        print('\nUnzipping Model')
+        with ZipFile(model_name+'.zip', 'r') as zip_ref:
+            zip_ref.extractall()
+        remove(model_name+'.zip')
+    model = AutoModelForSequenceClassification.from_pretrained(model_name+'/'+'finetuned_model')
+    tokenizer = AutoTokenizer.from_pretrained(model_name+'/'+'finetuned_model')
+    done_downloading = True
+
 #flask socket prep
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -22,8 +49,6 @@ app = flask.Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 app.config["DEBUG"] = True
 socketio = SocketIO(app,async_mode=async_mode)
-thread = None
-thread_lock = Lock()
 #stream prep 
 
 
@@ -96,8 +121,10 @@ def tokenize(tweets):
     tweets = " ".join(tweets.split())
     tweets = ''.join(c for c in tweets if c not in emoji.UNICODE_EMOJI)
     return tweets
+
 if __name__ == '__main__':
-    socketio.run(app=app,host='0.0.0.0',port=5000)
+    if(done_downloading):
+        socketio.run(app=app,port=5000)
 
 
 
