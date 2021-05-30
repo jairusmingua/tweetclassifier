@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onnx Model</title>
+</head>
+
+<body>
+    <!-- Load ONNX.js -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxjs/dist/onnx.min.js"></script>
+    <!-- Code that consume ONNX.js -->
+    <script>
+        // create a session
+        const myOnnxSession = new onnx.InferenceSession({ backendHint: "cpu" });
+        // load the ONNX model file
+        myOnnxSession.loadModel("./static/distil_quant.onnx").then(() => {
+            console.log('Model Loaded')
+        });
+    </script>
+    <h1>Onnx Inference</h1>
+</body>
+</html>

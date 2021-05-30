@@ -1,137 +1,93 @@
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-import torch
-import argparse
-import time
-import flask
+from utils.stream import initialize_stream_header
 import requests
-import logging
-from stream import *
-import re
-import emoji
-from threading import Thread,Lock
-from flask import request,render_template
-from flask_socketio import SocketIO,emit
-from os import path,rename,remove
-import shutil
-import wget
+import time
+import os
+import sys
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+import pygame
+import threading
+import pygame
+import json
+from utils.tools import (
+    classify_text,
+    tokenize,
+    print_centre,
+    screen_clear
+)
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer
+)
+led = None
+try:
+    from gpiozero import LED
+    led = LED(12)
+except ImportError:
+    print('GPIO Not Found')
 
-from zipfile import ZipFile
-#model prep
-#check if model exists
-model = None
-tokenizer = None
-done_downloading = False
+import argparse
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--m',type=str,required=False,default='bert-tagalog-distilbert-tagalog-base-cased')
+parser.add_argument('-l', '--local', action='store_true', help='Start in local mode given you have a tweet server')
+parser.add_argument('--host', type=str, help='Hostname of the tweet server', default='localhost')
+parser.add_argument('-p','--port', type=str, help='Port of the tweet server', default='5000')
 args = parser.parse_args()
-model_name = str(args.m)
-thread = None
-thread_lock = Lock()
-print('Default Model: '+model_name)
+local = args.local
+host = args.host
+port = args.port
 
-if(done_downloading==False):
-    if(not path.exists(model_name+'/'+'finetuned_model')):
-        print('Downloading Model...')
-        wget.download('https://storage.googleapis.com/crested-drive-172104.appspot.com/'+model_name+'.zip')
-        print('\nUnzipping Model')
-        with ZipFile(model_name+'.zip', 'r') as zip_ref:
-            zip_ref.extractall()
-        remove(model_name+'.zip')
-    model = AutoModelForSequenceClassification.from_pretrained(model_name+'/'+'finetuned_model')
-    tokenizer = AutoTokenizer.from_pretrained(model_name+'/'+'finetuned_model')
-    done_downloading = True
+model = AutoModelForSequenceClassification.from_pretrained('finetuned_model')
+tokenizer = AutoTokenizer.from_pretrained('finetuned_model')
 
-#flask socket prep
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
-async_mode = None
-app = flask.Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
-app.config["DEBUG"] = True
-socketio = SocketIO(app,async_mode=async_mode)
-#stream prep 
+def beep():
+    pygame.mixer.init()
+    pygame.mixer.music.load("./static/audio/notif.mp3")
+    pygame.mixer.music.play()
+    while pygame.mixer.music.get_busy() == True:
+        continue
 
 
-@app.route('/live',methods=['GET'])
-def live():
-    return render_template('live.html')
-@app.route('/',methods=['GET'])
-def home():
-    return render_template('index.html')
+def alert():
+    task = threading.Thread(target=beep)
+    task.start()
+    if led:
+        for _ in range(3):
+            led.on()
+            time.sleep(0.5)
+            led.off()
+            time.sleep(0.5) 
 
-@app.route('/classify', methods=['GET'])
-def classify():
-    text = request.args.get("text")
-    tokens = tokenizer([text], padding='max_length', truncation='longest_first', max_length=128, return_tensors='pt')
-    start = time.time()
-    with torch.no_grad():
-        out = model(**tokens)[0]
-    pred = out.argmax(1).item() # Outputs "0" which means "may sunog"
-    end = time.time()
-    print('Takes: '+str(end - start))
-    return {'prediction':pred}
-@socketio.event
-def connect():
-    print('connect')
-    global thread
-    with thread_lock:
-        if thread is None:
-            thread = socketio.start_background_task(target=get_stream)
-@socketio.on('hello')
-def handle_hello(data):
-    print('received message: ' + data['data'])
-    socketio.emit('message','hello')
 
-def get_stream():
-    #connected using DummyJairusM
-    bearer_token = 'AAAAAAAAAAAAAAAAAAAAAApVNAEAAAAAOjwvxNy1DK2YaYZAxUFVEHFVwvs%3DdTjiYcNJRrGmDZbToNOrI6a7bt5gI7nG9jpX9eXacPnpb1EOH5'
-    headers = create_headers(bearer_token)
-    rules = get_rules(headers, bearer_token)
-    delete = delete_all_rules(headers, bearer_token, rules)
-    set = set_rules(headers, delete, bearer_token)
-    with requests.get("https://api.twitter.com/2/tweets/search/stream", headers=headers, stream=True,) as response:
-        print(response.status_code)
-        sys.stdout.flush()
-        if response.status_code != 200:
-            raise Exception(
-                "Cannot get stream (HTTP {}): {}".format(
-                    response.status_code, response.text
+def main():
+    print(model)
+    print('Model Loaded')
+    if local:
+        while True:
+            screen_clear()
+            r = requests.get(f'http://{host}:{port}').json()
+            pred, text, masked, time_elapsed = classify_text(model,tokenizer,r.get('text'))
+            print_centre(text)
+            if pred == 1:
+                task = threading.Thread(target=alert)
+                task.start()
+        
+            time.sleep(10)
+
+    else:
+        headers = initialize_stream_header()
+        with requests.get("https://api.twitter.com/2/tweets/search/stream", headers=headers, stream=True,) as response:
+            sys.stdout.flush()
+            if response.status_code != 200:
+                raise Exception(
+                    "Cannot get stream (HTTP {}): {}".format(
+                        response.status_code, response.text
+                    )
                 )
-            )
-        for response_line in response.iter_lines():
-            if response_line:
-                json_response = json.loads(response_line)
-                print(json_response['data']['text'])
-                pred,text,masked= classify_text(json_response['data']['text'])
-                socketio.emit("tweet",{'prediction':pred,'text':text,'masked':masked})
-def classify_text(text):
-    masked = tokenize(text)
-    tokens = tokenizer([masked], padding='max_length', truncation='longest_first', max_length=128, return_tensors='pt')
-    start = time.time()
-    with torch.no_grad():
-        out = model(**tokens)[0]
-    pred = out.argmax(1).item() # Outputs "0" which means "may sunog"
-    end = time.time()
-    return pred,text,masked
-
-def tokenize(tweets):
-    tweets = re.sub("\B\@([\w\-]+)","[MENTION]",tweets)
-    tweets = re.sub(r"(?:\@|http?\://|https?\://|www)\S+", "[LINK]", tweets)
-    tweets = re.sub("\B\#([\w\-]+)", "[HASHTAG]",tweets)#Remove hashtag sign but keep the text
-    tweets = " ".join(tweets.split())
-    tweets = ''.join(c for c in tweets if c not in emoji.UNICODE_EMOJI)
-    return tweets
+            for response_line in response.iter_lines():
+                if response_line:
+                    json_response = json.loads(response_line)
+                    pred, text, masked, time_elapsed = classify_text(model,tokenizer,json_response['data']['text'])
+                    print_centre(text)
 
 if __name__ == '__main__':
-    if(done_downloading):
-        socketio.run(app=app,port=5000)
-
-
-
-
- 
-
-
-
-
-
+    main()
