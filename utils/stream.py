@@ -1,10 +1,14 @@
 import requests
-import os
 import sys
 import json
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 def create_headers(bearer_token):
-    headers = {"Authorization": "Bearer {}".format(bearer_token)}
-    return headers
+    return {"Authorization": "Bearer {}".format(bearer_token)}
+
+    
 def get_rules(headers, bearer_token):
     response = requests.get(
         "https://api.twitter.com/2/tweets/search/stream/rules", headers=headers
@@ -57,3 +61,15 @@ def set_rules(headers, delete, bearer_token):
         )
     print(json.dumps(response.json()))
     sys.stdout.flush()
+
+
+def initialize_stream_header() -> dict:
+    #connected using D***yJ****s*
+    bearer_token = str(os.getenv('BEARER_TOKEN') or None)
+    headers = create_headers(bearer_token)
+    rules = get_rules(headers, bearer_token)
+    delete = delete_all_rules(headers, bearer_token, rules)
+    set = set_rules(headers, delete, bearer_token)
+    
+    return headers
+              
