@@ -17,7 +17,7 @@ def get_rules(headers, bearer_token):
         raise Exception(
             "Cannot get rules (HTTP {}): {}".format(response.status_code, response.text)
         )
-    print(json.dumps(response.json()))
+    print('Getting Rules...')
     sys.stdout.flush()
     return response.json()
 
@@ -39,7 +39,7 @@ def delete_all_rules(headers, bearer_token, rules):
                 response.status_code, response.text
             )
         )
-    print(json.dumps(response.json()))
+    print('Deleting Old Rules...')
     sys.stdout.flush()
 
 
@@ -59,7 +59,7 @@ def set_rules(headers, delete, bearer_token):
         raise Exception(
             "Cannot add rules (HTTP {}): {}".format(response.status_code, response.text)
         )
-    print(json.dumps(response.json()))
+    print('Setting Rules...')
     sys.stdout.flush()
 
 

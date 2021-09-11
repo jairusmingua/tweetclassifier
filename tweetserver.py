@@ -5,7 +5,7 @@ from pandas.core.frame import DataFrame
 app = Flask(__name__)
 api = Api(app)
 counter = -1
-tweet: DataFrame = pd.read_csv('eval_balanced_only.csv')
+tweet: DataFrame = pd.read_csv('static/datasets/dataset.csv')
 
 class Tweet(Resource):
     def get(self):

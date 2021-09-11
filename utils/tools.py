@@ -22,7 +22,7 @@ def classify_text(model, tokenizer, text) -> dict:
         out = model(**tokens)[0]
     pred = out.argmax(1).item() # Outputs "0" which means "may sunog"
     end = time.time()
-    return {'pred':pred,'text':text,'masked':masked,'time':end-start}
+    return pred, text, masked, end-start
 
 
 def screen_clear():
