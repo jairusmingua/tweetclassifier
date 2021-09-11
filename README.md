@@ -11,24 +11,24 @@ This repo consists of several directories
 
 Sample file structure when the model is loaded
 ```
----/finetuned_model
------ added_tokens.json
------ config.json
------ pytorch_model.bin
------ special_tokens_map.json
------ tokenizer_config.json
------ tokenizer.json
------ vocab.txt
----/static
----/audio
----/datasets
----/templates
----/utils
---- app.py
---- requirements.txt
---- test.py
---- tweetserver.py
---- README.md
+├── /finetuned_model
+    ├── added_tokens.json
+    ├── config.json
+    ├── pytorch_model.bin
+    ├── special_tokens_map.json
+    ├── tokenizer_config.json
+    ├── tokenizer.json
+    └── vocab.txt
+├── /static
+├── /audio
+├── /datasets
+├── /templates
+├── /utils
+├── app.py
+├── requirements.txt
+├── test.py
+├── tweetserver.py
+├── README.md
 
 ```
 
