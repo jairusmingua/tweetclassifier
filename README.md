@@ -51,7 +51,7 @@ After this, you are now ready to run the application by executing:
 If you want to create a sample stream with your datasets. You can create a tweet server for the application to fetch tweets via your local network. Don't forget to place the dataset (.csv format) to the [datsets](#file-structure) folder and rename the file as **dataset.csv**
 
 To run a tweet server execute:
-(Your tweets can be defaulty accessed on **http://localhost:5000**)
+(Your tweets can be defaultly accessed on **http://localhost:5000**)
 ```
     python tweetserver.py
 ```
