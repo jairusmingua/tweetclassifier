@@ -67,4 +67,4 @@ Example execution of application fetching on **localhost** in port **5000**
 ```
 
 Resources:
-* [jcblaisecruz02/Filipino-Text-Benchmarks](https://github.com/jcblaisecruz02/Filipino-Text-Benchmark)
+* [jcblaisecruz02/Filipino-Text-Benchmarks](https://github.com/jcblaisecruz02/Filipino-Text-Benchmarks)
