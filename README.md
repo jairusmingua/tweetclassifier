@@ -1,7 +1,7 @@
 # Tweet fire report classifier
 ## About this repo
-This repo demonstrates the capability of classifying fire-related tweets using pre-trained BERT tagalog [models by jcblaise](https://huggingface.co/jcblaise) 
-
+This repo demonstrates the capability of classifying fire-related tweets using pre-trained BERT tagalog [models by jcblaise](https://huggingface.co/jcblaise).
+Check out our [paper](https://ieeexplore.ieee.org/document/9731956) explaining the methods used in classifying fire-related tweets.
 ## File Structure
 This repo consists of several directories
 * static - contains audio files for notification system of the product and dataset for testing out the product
